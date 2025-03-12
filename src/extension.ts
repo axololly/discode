@@ -1,32 +1,19 @@
-import { getIconForFile } from 'vscode-icons-js';
 import {
-    TextEditor,
     ExtensionContext,
     commands,
     window
 } from 'vscode';
-import { start } from './rpc';
-
-function changeEditorCallback(editor: TextEditor | undefined) {
-    if (!editor) return;
-
-    let filename = editor.document.fileName;
-
-    let currentTimestamp = Math.floor(Date.now() / 1000);
-
-    console.log(`Opened: ${filename} (Timestamp: ${currentTimestamp})`);
-
-    let something = getIconForFile(filename);
-
-    console.log(`Something: ${something}`);
-}
+import { RPC } from './rpc';
 
 export function activate(context: ExtensionContext) {
     console.log(`I am alive!`);
 
-    start();
+    let rpc = new RPC();
 
-    window.onDidChangeActiveTextEditor(changeEditorCallback);
+    rpc.start();
+
+    window.onDidChangeActiveTextEditor(rpc.changeEditorCallback);
+    window.onDidChangeWindowState(rpc.changeEditorFocus);
 
     const disposable = commands.registerCommand(
         'my-own-rpc-thingy.helloWorld',
