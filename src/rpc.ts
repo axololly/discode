@@ -1,22 +1,20 @@
 import { Client } from 'discord-rpc';
-import path = require('node:path');
 import {
     TextEditor,
     WindowState,
     window
 } from 'vscode';
-import * as filenames from './data/filenames.json';
-import * as fileExts from './data/file-exts.json';
-
-const baseUrl = "https://raw.githubusercontent.com/axololly/my-own-rpc-thingy/refs/heads/main/assets/";
-// const vscodeImage = "https://upload.wikimedia.org/wikipedia/commons/1/1c/Visual_Studio_Code_1.35_icon.png";
+import { Icons } from './icons';
+import Path from 'pathlib-js';
 
 export class RPC {
     client: Client
     idlingWait: NodeJS.Timeout | undefined;
+    idleTimeout: number;
 
-    constructor() {
+    constructor(idleTimeout: number = 20) {
         this.client = new Client({ transport: 'ipc' });
+        this.idleTimeout = idleTimeout;
     }
 
     async start() {
@@ -24,74 +22,86 @@ export class RPC {
             console.log(`Authed for user ${this.client.user!.username!}`);
         });
 
-        this.client.login({ clientId: '783070621679747123' });
+        await this.client.login({ clientId: '783070621679747123' });
     }
-    
-    private findImageName(file: path.ParsedPath) {
-        let imageName: string;
 
-        if (file.base in filenames) {
-            // @ts-ignore
-            imageName = filenames[file.base];
-        }
-        else if (file.ext in fileExts) {
-            // @ts-ignore
-            imageName = fileExts[file.ext]
-        }
-        else {
-            imageName = "default";
-        }
-
-        return imageName;
+    private getTimestamp(): number {
+        return Math.floor(Date.now() / 1000);
     }
 
     changeEditorCallback(editor: TextEditor | undefined) {
         if (!editor) return;
+        if (editor.document.isUntitled) return;
 
-        let since = Math.floor(Date.now() / 1000);
+        let since = this.getTimestamp();
 
-        let file = path.parse(editor.document.fileName);    
-        let imageName = this.findImageName(file);
+        let file = new Path(editor.document.fileName);
+        let fileIconUrl = Icons.getFileAsset(file).url;
+
+        let folder = file.parent();
+        let folderIconUrl = Icons.getFolderAsset(folder, "open").url;
+
+        let cursor = editor.selection.active;
+        let totalLines = editor.document.lineCount;
 
         this.client.setActivity({
-            largeImageKey: `${baseUrl}/normal/${imageName}.png`,
-            details: `Editing: ${file.base}`,
+            largeImageKey: fileIconUrl,
+            largeImageText: `On line ${cursor.line} of ${totalLines}`,
+            
+            smallImageKey: folderIconUrl,
+            smallImageText: `Working in ${folder.relative(Path.cwd())}`,
+
+            details: `Editing: ${file.basename}`,
             
             startTimestamp: since,
         });
-
-        console.log(`Updated activity.`);
     }
 
     changeEditorFocus(state: WindowState) {
-        if (state.active) {
-            console.log("Clearing timeout.");
-            
+        if (!window.activeTextEditor) return;
+        
+        if (state.focused) {
+            this.changeEditorCallback(window.activeTextEditor);
+
             clearTimeout(this.idlingWait);
             return;
         }
 
-        if (!window.activeTextEditor) return;
-
-        let file = path.parse(window.activeTextEditor.document.fileName);
-        let imageName = this.findImageName(file);
-
         this.idlingWait = setTimeout(
-            () => {
-                console.log(`Waiting 10 seconds before announcing idling.`);
-
-                let since = Math.floor(Date.now() / 1000);
-
-                this.client.setActivity({
-                    largeImageKey: `${baseUrl}/paused/${imageName}`,
-                    details: `Idling on: ${file.base}`,
-
-                    startTimestamp: since
-                });
-                
-                console.log(`Updated activity to idling.`);
-            },
-            10e3
+            () => { this.updateOnIdle(); },
+            this.idleTimeout * 1e3
         );
+    }
+
+    private updateOnIdle() {
+        let editor = window.activeTextEditor!;
+
+        let file = new Path(editor.document.fileName);
+        let fileIconUrl = Icons.getFileAsset(file, "paused").url;
+
+        let folder = file.parent();
+        let folderIconUrl = Icons.getFolderAsset(folder, "closed").url;
+
+        let cursor = editor.selection.active;
+        let totalLines = editor.document.lineCount;
+
+        let since = this.getTimestamp() + this.idleTimeout;
+
+        this.client.setActivity({
+            largeImageKey: fileIconUrl,
+            largeImageText: `On line ${cursor.line} of ${totalLines}`,
+            
+            smallImageKey: folderIconUrl,
+            smallImageText: `Idling in ${folder.relative(Path.cwd())}`,
+
+            details: `Idling on: ${file.basename}`,
+
+            startTimestamp: since
+        });
+    }
+
+    stop() {
+        this.client.destroy();
+        clearTimeout(this.idlingWait);
     }
 }

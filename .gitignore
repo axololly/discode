@@ -3,3 +3,4 @@ node_modules/
 out/
 *.py
 pause.png
+assets/vscode.png
