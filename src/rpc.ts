@@ -1,25 +1,29 @@
+import { getLogger } from './logging';
 import { Client } from 'discord-rpc';
+import { Icons } from './icons';
 import {
     TextEditor,
     WindowState,
     window
 } from 'vscode';
-import { Icons } from './icons';
 import Path from 'pathlib-js';
+import { Settings } from './settings';
+
+let logger = getLogger("discode-rpc");
 
 export class RPC {
     client: Client
     idlingWait: NodeJS.Timeout | undefined;
-    idleTimeout: number;
+    settings: Settings;
 
-    constructor(idleTimeout: number = 20) {
+    constructor() {
         this.client = new Client({ transport: 'ipc' });
-        this.idleTimeout = idleTimeout;
+        this.settings = Settings.load();
     }
 
     async start() {
         this.client.on('ready', () => {
-            console.log(`Authed for user ${this.client.user!.username!}`);
+            logger.info(`Authenticated for user @${this.client.user!.username!}`);
         });
 
         await this.client.login({ clientId: '783070621679747123' });
@@ -30,77 +34,108 @@ export class RPC {
     }
 
     changeEditorCallback(editor: TextEditor | undefined) {
-        if (!editor) return;
-        if (editor.document.isUntitled) return;
+        if (!editor) {
+            logger.warning("No editor was found. RPC was not updated. [Location: changeEditorCallback]");
+            return;
+        }
+
+        if (editor.document.isUntitled) {
+            logger.warning("Current editor document is untitled. RPC was not updated. [Location: changeEditorCallback]");
+            return;
+        }
 
         let since = this.getTimestamp();
 
         let file = new Path(editor.document.fileName);
-        let fileIconUrl = Icons.getFileAsset(file).url;
+        let fileIcon = Icons.getFromLanguageID(editor.document.languageId)
+                    ?? Icons.getFileAsset(file);
 
         let folder = file.parent();
-        let folderIconUrl = Icons.getFolderAsset(folder, "open").url;
+        let folderIcon = Icons.getFolderAsset(folder, "open");
 
         let cursor = editor.selection.active;
         let totalLines = editor.document.lineCount;
 
         this.client.setActivity({
-            largeImageKey: fileIconUrl,
-            largeImageText: `On line ${cursor.line} of ${totalLines}`,
+            largeImageKey: fileIcon.url,
+            largeImageText: `On line ${cursor.line + 1} of ${totalLines}`,
             
-            smallImageKey: folderIconUrl,
-            smallImageText: `Working in ${folder.relative(Path.cwd())}`,
+            smallImageKey: folderIcon.url,
+            smallImageText: `Working in ${folder.stem}${folder == Path.cwd() ? ` (root)` : ``}`,
 
             details: `Editing: ${file.basename}`,
-            
-            startTimestamp: since,
+            startTimestamp: since
         });
+
+        logger.info("Successfully set RPC activity.");
+
+        logger.debug(
+            `Large image: ${fileIcon}\n`
+          + `Small image: ${folderIcon}`
+        );
     }
 
     changeEditorFocus(state: WindowState) {
-        if (!window.activeTextEditor) return;
+        if (state.focused && !window.activeTextEditor) {
+            logger.warning("No active text editor found. RPC was not updated. [Location: changeEditorFocus]");
+            return;
+        }
         
         if (state.focused) {
+            logger.debug("Window became focused again. Updating RPC and clearing timeout.");
+
             this.changeEditorCallback(window.activeTextEditor);
 
             clearTimeout(this.idlingWait);
+
             return;
         }
 
+        logger.debug(`Timeout starting. (Waiting ${this.idlingWait}s)`);
+
         this.idlingWait = setTimeout(
             () => { this.updateOnIdle(); },
-            this.idleTimeout * 1e3
+            this.settings.idleTimeout * 1e3
         );
     }
 
     private updateOnIdle() {
         let editor = window.activeTextEditor!;
+        let doc = editor.document;
 
-        let file = new Path(editor.document.fileName);
-        let fileIconUrl = Icons.getFileAsset(file, "paused").url;
+        let file = new Path(doc.fileName);
+        let fileIcon = Icons.getFromLanguageID(doc.languageId, "paused")
+                    ?? Icons.getFileAsset(file, "paused");
 
         let folder = file.parent();
-        let folderIconUrl = Icons.getFolderAsset(folder, "closed").url;
+        let folderIcon = Icons.getFolderAsset(folder, "closed");
 
         let cursor = editor.selection.active;
-        let totalLines = editor.document.lineCount;
 
-        let since = this.getTimestamp() + this.idleTimeout;
+        let since = this.getTimestamp() - this.settings.idleTimeout;
 
         this.client.setActivity({
-            largeImageKey: fileIconUrl,
-            largeImageText: `On line ${cursor.line} of ${totalLines}`,
+            largeImageKey: fileIcon.url,
+            largeImageText: `On line ${cursor.line + 1} of ${doc.lineCount}`,
             
-            smallImageKey: folderIconUrl,
-            smallImageText: `Idling in ${folder.relative(Path.cwd())}`,
+            smallImageKey: folderIcon.url,
+            smallImageText: `Idling in ${folder.stem}`,
 
             details: `Idling on: ${file.basename}`,
 
             startTimestamp: since
         });
+
+        logger.info("Set idling activity.");
+        logger.debug(
+            `Large image: ${fileIcon}\n`
+          + `Small image: ${folderIcon}`
+        );
     }
 
     stop() {
+        logger.info("Destroying client and clearing idling timeout.");
+
         this.client.destroy();
         clearTimeout(this.idlingWait);
     }

@@ -1,13 +1,9 @@
-import {
-    ExtensionContext,
-    commands,
-    window
-} from 'vscode';
+import { window } from 'vscode';
 import { RPC } from './rpc';
 
 let rpc = new RPC();
 
-export async function activate(context: ExtensionContext) {
+export async function activate() {
     await rpc.start();
 
     if (window.activeTextEditor) {
@@ -21,15 +17,6 @@ export async function activate(context: ExtensionContext) {
     window.onDidChangeWindowState((state) => {
         rpc.changeEditorFocus(state);
     });
-
-    context.subscriptions.push(
-        commands.registerCommand(
-            'my-own-rpc-thingy.helloWorld',
-            () => {
-                window.showInformationMessage("This extension is working correctly.");
-            }
-        )
-    );
 }
 
 export function deactivate() {
