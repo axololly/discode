@@ -1,6 +1,7 @@
 import Path from 'pathlib-js';
 import { fileExts, fileNames, filePaths, folderNames, languageIDs } from './data';
 import { getLogger } from './logging';
+import { Uri, workspace } from 'vscode';
 
 const baseUrl = "https://raw.githubusercontent.com/axololly/my-own-rpc-thingy/refs/heads/main/";
 
@@ -24,39 +25,37 @@ export class Icon {
         this.url = url
     }
 
-    toString = () => `Icon(name = ${this.name}, localPath = ${this.localPath})`;
+    toString = () => this.name;
 }
 
 export class Icons {
-    static getFromLanguageID(languageID: string, type: IconType = "normal"): Icon | undefined {
-        let name = languageIDs[languageID.toLowerCase()];
+    static async getFileAsset(path: Path, type: IconType = "normal"): Promise<Icon> {
+        let filePathIndex = path.parts().slice(-2).join('/').toLowerCase();
+        let fileNameIndex = path.basename.toLowerCase();
+        let fileExtsIndex = path.suffixes.join('').substring(1).toLowerCase();
 
-        logger.debug(`Attempted to get language ID: ${languageID} => ${name} (type: ${type})`);
+        let name: string = filePaths[filePathIndex]
+                        ?? fileNames[fileNameIndex]
+                        ?? fileExts [fileExtsIndex];
 
-        if (!name) return undefined;
+        var languageIDsIndex;
 
-        let local = `assets/files/${type}/${name}.png`;
+        if (!name) {
+            let doc = await workspace.openTextDocument(Uri.file(`${path}`));
 
-        return new Icon(
-            name,
-            local,
-            `${baseUrl}/${local}`
-        );
-    }
+            languageIDsIndex = doc.languageId.toLowerCase();
 
-    static getFileAsset(path: Path, type: IconType = "normal"): Icon {
-        let name: string = filePaths[Path.cwd().relative(path).toLowerCase()]
-                        ?? fileNames[path.basename.toLowerCase()]
-                        ?? fileExts[path.suffixes.join('').toLowerCase()]
-                        ?? "file";
-        
-        logger.debug(
-            `Attempted to get file asset: ${path} => ${name}\n`
-          + `    filePaths index:   "${Path.cwd().relative(path).toLowerCase()}"\n`
-          + `    fileNames index:   "${path.basename.toLowerCase()}"\n`
-          + `    fileExts index:    "${path.suffixes.join('').toLowerCase()}"`
-        );
-        
+            name = languageIDs[languageIDsIndex] ?? "file";
+        }
+
+        logger.debug([
+            `Attempted to get file asset: ${path} => ${name}`,
+            `    filePaths index:   "${filePathIndex}"`,
+            `    fileNames index:   "${fileNameIndex}"`,
+            `    fileExts index:    "${fileExtsIndex}"`,
+            `    lang IDs index:    "${languageIDsIndex}"`
+        ].join('\n'));
+
         let local = `assets/files/${type}/${name}.png`;
 
         return new Icon(
@@ -67,8 +66,7 @@ export class Icons {
     }
 
     static getFolderAsset(path: Path, type: FolderType = "closed"): Icon {
-        let name: string = folderNames[path.basename.toLowerCase()]
-                        ?? "folder";
+        let name: string = folderNames[path.basename.toLowerCase()] ?? "folder";
 
         logger.debug(`Attempted to get folder asset: ${path} => ${name}`);
 
