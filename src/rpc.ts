@@ -13,15 +13,24 @@ interface Button {
     url: string;
 }
 
+interface FocusedFile {
+    path: Path;
+    since: number;
+}
+
 export class RPC {
-    client: Client
+    client: Client;
+    focusedFile: FocusedFile | undefined;
+    gitInfo: GitInfo | undefined;
+    openedSince: number;
     idlingWait: NodeJS.Timeout | undefined;
     settings: Settings;
-    gitInfo: GitInfo | undefined;
 
-    constructor () {
+    constructor (openedSince: number) {
         this.client = new Client({ transport: 'ipc' });
         this.settings = Settings.load();
+
+        this.openedSince = openedSince;
     }
 
     async start() {
@@ -36,6 +45,10 @@ export class RPC {
         return Math.floor(Date.now() / 1000);
     }
 
+    private isSamePath(p1: Path, p2: Path) {
+        return p1.path === p2.path;
+    }
+
     async changeEditorCallback(editor: TextEditor | undefined) {
         if (!editor) {
             logger.notice("No editor was found. RPC was not updated.");
@@ -47,17 +60,22 @@ export class RPC {
             return;
         }
 
-        let since = this.getTimestamp();
-
         let doc = editor.document;
 
         let file = new Path(doc.fileName);
         let fileIcon = await Icons.getFileAsset(file);
 
-        let folder = file.parent();
-        
+        if (!this.focusedFile || !this.isSamePath(this.focusedFile.path, file)) {
+            // When a new file is changed to
+            this.focusedFile = {
+                path: file,
+                since: this.getTimestamp()
+            };
+        }
+
         let debugSession = debug.activeDebugSession;
 
+        let folder = file.parent();
         let folderIcon = Icons.getFolderAsset(debugSession ? new Path("debug") : folder, "open");
 
         let cursor = editor.selection.active;
@@ -81,6 +99,10 @@ export class RPC {
 
         let wsFolder = workspace.getWorkspaceFolder(doc.uri)!;
         let wsFolderPath = new Path(wsFolder.uri.fsPath);
+
+        let since = this.settings.keepFileTimersWhenChanging
+                  ? this.openedSince
+                  : this.focusedFile.since;
 
         this.client.setActivity({
             largeImageKey:  fileIcon.url,
@@ -110,6 +132,7 @@ export class RPC {
         if (state.focused) {
             if (!window.activeTextEditor) {
                 logger.info("No active text editor found. RPC was not updated. [Location: changeEditorFocus]");
+                this.updateOnIdle();
                 return;
             }
 
@@ -132,8 +155,14 @@ export class RPC {
         );
     }
 
-    private async updateOnIdle() {
-        let editor = window.activeTextEditor!;
+    async updateOnIdle() {
+        let editor = window.activeTextEditor;
+
+        if (!editor) {
+            logger.info("Could not locate an active text editor. RPC was not updated for idling.");
+            return;
+        }
+
         let doc = editor.document;
 
         let file = new Path(doc.fileName);
@@ -148,6 +177,11 @@ export class RPC {
 
         let since = this.getTimestamp() - this.settings.idleTimeout;
 
+        // If we're preserving times
+        if (!this.settings.startNewTimersAfterIdling) {
+            since = this.openedSince;
+        }
+
         let buttons: Button[] = [];
 
         if (this.gitInfo) {
@@ -157,10 +191,12 @@ export class RPC {
             });
         }
 
-        buttons.push({
-            label: "Try me out!",
-            url: "https://github.com/axololly/my-own-rpc-thingy/tree/main"
-        });
+        if (this.settings.includeWatermark) {
+            buttons.push({
+                label: "Try me out!",
+                url: "https://github.com/axololly/my-own-rpc-thingy/tree/main"
+            });
+        }
 
         let wsFolder = workspace.getWorkspaceFolder(doc.uri)!;
         let wsFolderPath = new Path(wsFolder.uri.fsPath);
@@ -187,10 +223,6 @@ export class RPC {
             `Workspace name: ${workspace.name}`,
             `In debug session? ${debugSession !== undefined}`
         ].join('\n'));
-    }
-
-    async updateOnDebugSession(session: DebugSession) {
-        logger.info(`Data: ${JSON.stringify(session, null, 2)}`);
     }
 
     stop() {

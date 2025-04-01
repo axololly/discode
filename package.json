@@ -2,6 +2,13 @@
   "name": "axo-discode",
   "displayName": "DisCode - Discord RPC Extension",
   "description": "A Visual Studio Code extension that displays the projects you're working in, on your Discord profile.\n\nYeah, I know: not new. Shut up.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/axololly/my-own-rpc-thingy.git"
+  },
+  "author": {
+    "name": "axololly"
+  },
   "version": "0.1.0",
   "engines": {
     "vscode": "^1.98.0"
@@ -10,7 +17,7 @@
     "Other"
   ],
   "activationEvents": [
-    "*"
+    "onStartupFinished"
   ],
   "extensionDependencies": [
     "vscode.git"
@@ -42,19 +49,34 @@
           ]
         },
         "discode.idleTimeout": {
+          "title": "Set Idle Timeout",
           "type": "integer",
           "default": 20,
           "markdownDescription": "Specifies the number of seconds to wait before updating the RPC to an idle screen."
         },
         "discode.includeWatermark": {
+          "title": "Include a Watermark",
           "type": "boolean",
           "default": true,
           "markdownDescription": "Whether or not to include a button that links back to this extension.\n\n_If you opt not to have this enabled, you can share this project by word of mouth. Thank you._"
         },
         "discode.promptOnNewRelease": {
+          "title": "Prompt on New Release",
           "type": "boolean",
           "default": true,
           "markdownDescription": "Whether or not to prompt the user on startup when a new version of this extension is discovered."
+        },
+        "discode.keepFileTimersWhenChanging": {
+          "title": "Keep File Timers When Changing",
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Do not start a new timer when changing between files."
+        },
+        "discode.startNewTimersAfterIdling": {
+          "title": "Start New Timers After Idling",
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Start a new timer when going idle on a given file."
         }
       }
     }

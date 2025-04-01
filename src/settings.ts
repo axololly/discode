@@ -9,6 +9,8 @@ interface WorkspaceConfiguration {
     idleTimeout: number;
     includeWatermark: boolean;
     promptOnNewRelease: boolean;
+    keepFileTimersWhenChanging: boolean;
+    startNewTimersAfterIdling: boolean;
 }
 
 export class Settings {
@@ -16,6 +18,8 @@ export class Settings {
     idleTimeout: number;
     includeWatermark: boolean;
     promptOnNewRelease: boolean;
+    keepFileTimersWhenChanging: boolean;
+    startNewTimersAfterIdling: boolean;
 
     constructor (options: WorkspaceConfiguration) {
         let level = LogLevel[options.minimumLoggingLevel as keyof typeof LogLevel];
@@ -34,6 +38,8 @@ export class Settings {
         this.idleTimeout = timeout;
         this.includeWatermark = options.includeWatermark;
         this.promptOnNewRelease = options.promptOnNewRelease;
+        this.keepFileTimersWhenChanging = options.keepFileTimersWhenChanging;
+        this.startNewTimersAfterIdling = options.startNewTimersAfterIdling;
     }
 
     static load(): Settings {

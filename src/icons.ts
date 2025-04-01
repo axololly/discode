@@ -28,8 +28,25 @@ export class Icon {
     toString = () => this.name;
 }
 
-export class Icons {
-    static async getFileAsset(path: Path, type: IconType = "normal"): Promise<Icon> {
+interface IconCache {
+    [key: string]: string;
+}
+
+class IconRetriever {
+    private cache: IconCache = {};
+
+    async getFileAsset(path: Path, type: IconType = "normal"): Promise<Icon> {
+        if (path.path in this.cache) {
+            let name = this.cache[path.path];
+            let localPath = `assets/files/${type}/${name}.png`;
+
+            return new Icon(
+                name,
+                localPath,
+                `${baseUrl}/${localPath}`
+            );
+        }
+
         let filePathIndex = path.parts().slice(-2).join('/').toLowerCase();
         let fileNameIndex = path.basename.toLowerCase();
         let fileExtsIndex = path.suffixes.join('').substring(1).toLowerCase();
@@ -48,6 +65,8 @@ export class Icons {
             name = languageIDs[languageIDsIndex] ?? "file";
         }
 
+        this.cache[path.path] = name;
+
         logger.debug([
             `Attempted to get file asset: ${path} => ${name}`,
             `    filePaths index:   "${filePathIndex}"`,
@@ -65,7 +84,7 @@ export class Icons {
         );
     }
 
-    static getFolderAsset(path: Path, type: FolderType = "closed"): Icon {
+    getFolderAsset(path: Path, type: FolderType = "closed"): Icon {
         let name: string = folderNames[path.basename.toLowerCase()] ?? "folder";
 
         logger.debug(`Attempted to get folder asset: ${path} => ${name}`);
@@ -79,3 +98,5 @@ export class Icons {
         );
     }
 }
+
+export const Icons = new IconRetriever();

@@ -42,24 +42,25 @@ class Version {
 
 export const currentVersion = Version.fromString(packageData.version);
 
-interface VersionData   { version:    string          }
-interface ExtensionData { versions:   VersionData[]   }
-interface ResponsePage  { extensions: ExtensionData[] }
-interface APIResponse   { results:    ResponsePage[]  }
+interface VersionData   { version:     string          }
+interface ExtensionData { versions:    VersionData[]   }
+interface ResponsePage  { extensions?: ExtensionData[] }
+interface APIResponse   { results:     ResponsePage[]  }
 
 export async function checkForLatestVersion() {
     let reply = await fetch(
         "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery", {
+        method: 'POST',
         headers: {
             "Accept": "application/json; api-version=3.0-preview",
             "Content-Type": "application/json",
-            "User-Agent": "discode"
+            "User-Agent": "axololly.discode"
         },
         body: JSON.stringify({
             "filters": [{
                 "criteria": [{
                     "filterType": 7,
-                    "value": "discode"
+                    "value": "axololly.discode"
                 }]
             }],
             "flags": 529
@@ -67,17 +68,25 @@ export async function checkForLatestVersion() {
     });
 
     let json = await reply.json() as APIResponse;
+    let extensionResults = json.results[0].extensions;
 
-    let allVersions: VersionData[] = json.results[0].extensions[0].versions;
+    logger.debug(`Extension results: ${extensionResults?.length}`);
 
-    logger.debug(`Located ${allVersions.length} new versions.`);
-
-    if (!allVersions.length) {
-        logger.fatal("Could not locate any version on the Extension Marketplace.");
+    if (!extensionResults || extensionResults.length === 0) {
+        logger.fatal("Could not fetch latest version of this extension on the Marketplace.");
         return;
     }
 
+    let allVersions: VersionData[] = extensionResults[0].versions;
+
+    logger.debug(`Located ${allVersions.length} new versions.`);
+
     let latestVersion = Version.fromString(allVersions[0].version);
+
+    if (!latestVersion) {
+        logger.fatal("Could not locate any version on the Marketplace.");
+        return;
+    }
 
     if (latestVersion.isAbove(currentVersion)) {
         window.showInformationMessage(

@@ -1,6 +1,7 @@
 .vscode/
 node_modules/
 out/
+build/
 *.py
 pause.png
 assets/vscode.png

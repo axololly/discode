@@ -66,6 +66,8 @@ const LEVEL_NAME_LENGTH = Math.max(
     ...Object.keys(LogLevel).map((v) => v.length)
 );
 
+const LOCATION_NAME_LENGTH = 20;
+
 function log(message: string, level: LogLevel, location: string) {
     if (level < MINIMUM_LOG_LEVEL) return;
 
@@ -95,7 +97,7 @@ function log(message: string, level: LogLevel, location: string) {
 
     let datetime = `${DIM}${GREY}[${date} ${time}]${RESET}`;
 
-    location = `${PURPLE}${location.toString().padEnd(15)}${RESET}`;
+    location = `${PURPLE}${location.toString().padEnd(LOCATION_NAME_LENGTH)}${RESET}`;
 
     message.split('\n').forEach((line) => {
         console.log(`${datetime} ${strLevel} ${location}${WHITE}${line}${RESET}`);

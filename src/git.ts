@@ -103,6 +103,7 @@ export class GitInfo {
             if (remoteUrl !== "") {
                 logger.warning(`Could not interpret origin URL: "${remoteUrl}"`);
             }
+
             return;
         }
 
