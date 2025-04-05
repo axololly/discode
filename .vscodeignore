@@ -1,11 +1,8 @@
 .vscode/**
 assets/**
 build/**
-node_modules/**
 src/**
-
 .gitignore
-**/*.ps1
 TODO.md
 esling.config.mjs
 tsconfig.json

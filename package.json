@@ -1,6 +1,7 @@
 {
-  "name": "axo-discode",
-  "displayName": "DisCode - Discord RPC Extension",
+  "name": "discode",
+  "icon": "./assets/icon.png",
+  "displayName": "Discode",
   "description": "A Visual Studio Code extension that displays the projects you're working in, on your Discord profile.\n\nYeah, I know: not new. Shut up.",
   "repository": {
     "type": "git",
@@ -9,7 +10,7 @@
   "author": {
     "name": "axololly"
   },
-  "version": "0.1.0",
+  "version": "0.2.0",
   "engines": {
     "vscode": "^1.98.0"
   },
@@ -24,9 +25,18 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
-    "commands": [],
+    "commands": [
+      {
+        "command": "discode.connect",
+        "title": "Discode: Connect to Discord"
+      },
+      {
+        "command": "discode.disconnect",
+        "title": "Discode: Disconnect from Discord"
+      }
+    ],
     "configuration": {
-      "title": "DisCode",
+      "title": "Discode",
       "properties": {
         "discode.minimumLoggingLevel": {
           "type": "string",
@@ -38,7 +48,7 @@
             "Error",
             "Fatal"
           ],
-          "default": "Debug",
+          "default": "Info",
           "markdownEnumDescriptions": [
             "The lowest level and _most verbose_ output.",
             "Get a deeper insight into the extension's execution.",
@@ -77,6 +87,12 @@
           "type": "boolean",
           "default": false,
           "markdownDescription": "Start a new timer when going idle on a given file."
+        },
+        "discode.useGitFeatures": {
+          "title": "Use Git Features",
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Whether or not to update users about your project's GitHub repository."
         }
       }
     }
@@ -89,6 +105,11 @@
     "lint": "eslint src",
     "test": "vscode-test"
   },
+  "dependencies": {
+    "openurl": "^1.1.1",
+    "pathlib-js": "^1.5.0",
+    "discord-rpc": "^4.0.1"
+  },
   "devDependencies": {
     "@types/discord-rpc": "^4.0.9",
     "@types/fs-extra": "^11.0.4",
@@ -100,10 +121,7 @@
     "@typescript-eslint/parser": "^8.28.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
-    "discord-rpc": "^4.0.1",
     "eslint": "^9.23.0",
-    "openurl": "^1.1.1",
-    "pathlib-js": "^1.5.0",
     "typescript": "^5.7.3",
     "vscode": "^1.1.37"
   }

@@ -2,7 +2,7 @@ import { getLogger } from './logging';
 import packageData from '../package.json';
 import { commands, window } from 'vscode';
 
-const logger = getLogger("discode-versioning");
+const logger = getLogger("discode-version");
 
 const VERSION_REGEX = /(\d+)\.(\d+)\.(\d+)/;
 
@@ -42,12 +42,15 @@ class Version {
 
 export const currentVersion = Version.fromString(packageData.version);
 
+// Strongly typing the API response
 interface VersionData   { version:     string          }
 interface ExtensionData { versions:    VersionData[]   }
 interface ResponsePage  { extensions?: ExtensionData[] }
 interface APIResponse   { results:     ResponsePage[]  }
 
 export async function checkForLatestVersion() {
+    // Fuck you, Microsoft, for making the API private.
+    // I had to get this from their C++ Tools extension.
     let reply = await fetch(
         "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery", {
         method: 'POST',
@@ -73,7 +76,7 @@ export async function checkForLatestVersion() {
     logger.debug(`Extension results: ${extensionResults?.length}`);
 
     if (!extensionResults || extensionResults.length === 0) {
-        logger.fatal("Could not fetch latest version of this extension on the Marketplace.");
+        logger.error("Could not fetch latest version of this extension on the Marketplace.");
         return;
     }
 
@@ -84,10 +87,11 @@ export async function checkForLatestVersion() {
     let latestVersion = Version.fromString(allVersions[0].version);
 
     if (!latestVersion) {
-        logger.fatal("Could not locate any version on the Marketplace.");
+        logger.error("Could not locate any version on the Marketplace.");
         return;
     }
 
+    // If the user is using an outdated version, prompt them to install the new one.
     if (latestVersion.isAbove(currentVersion)) {
         window.showInformationMessage(
             "There is a new version of this extension on the Marketplace.\n \
@@ -106,7 +110,7 @@ export async function checkForLatestVersion() {
                 ).then(
                     undefined,
                     (reason: string) => {
-                        logger.fatal(`Could not install v${latestVersion} of extension: ${reason}`);
+                        logger.error(`Could not install v${latestVersion} of extension: ${reason}`);
                     }
                 );
             }

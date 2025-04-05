@@ -8,16 +8,20 @@ import { GitInfo } from './git';
 
 let logger = getLogger("discode-rpc");
 
+// Represents an RPC button.
 interface Button {
     label: string;
     url: string;
 }
 
+// Represents the file being
+// looked at in the editor.
 interface FocusedFile {
     path: Path;
     since: number;
 }
 
+// Where the magic happens.
 export class RPC {
     client: Client;
     focusedFile: FocusedFile | undefined;
@@ -30,6 +34,8 @@ export class RPC {
         this.client = new Client({ transport: 'ipc' });
         this.settings = Settings.load();
 
+        // Store a timestamp of when the editor was first
+        // booted up, that can be displayed in the RPC.
         this.openedSince = openedSince;
     }
 
@@ -65,8 +71,8 @@ export class RPC {
         let file = new Path(doc.fileName);
         let fileIcon = await Icons.getFileAsset(file);
 
+        // Update the cache when a new file is changed to
         if (!this.focusedFile || !this.isSamePath(this.focusedFile.path, file)) {
-            // When a new file is changed to
             this.focusedFile = {
                 path: file,
                 since: this.getTimestamp()
@@ -76,6 +82,9 @@ export class RPC {
         let debugSession = debug.activeDebugSession;
 
         let folder = file.parent();
+        
+        // The fake debug path is there because the method extracts the basename for lookup.
+        // This means if we are debugging, we will always get a debug folder icon in the RPC.
         let folderIcon = Icons.getFolderAsset(debugSession ? new Path("debug") : folder, "open");
 
         let cursor = editor.selection.active;
@@ -100,6 +109,9 @@ export class RPC {
         let wsFolder = workspace.getWorkspaceFolder(doc.uri)!;
         let wsFolderPath = new Path(wsFolder.uri.fsPath);
 
+        // If the setting is enabled, use the timestamp of when
+        // the editor was first opened. If not, use the timestamp
+        // of when *this file* was opened.
         let since = this.settings.keepFileTimersWhenChanging
                   ? this.openedSince
                   : this.focusedFile.since;
@@ -132,7 +144,11 @@ export class RPC {
         if (state.focused) {
             if (!window.activeTextEditor) {
                 logger.info("No active text editor found. RPC was not updated. [Location: changeEditorFocus]");
+                
+                // We switched to another tab that isn't editing text.
+                // This means we have "idled" on our previous file.
                 this.updateOnIdle();
+                
                 return;
             }
 
