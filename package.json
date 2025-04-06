@@ -1,6 +1,6 @@
 {
   "name": "discode",
-  "icon": "./assets/icon.png",
+  "icon": "icon.png",
   "displayName": "Discode",
   "description": "A Visual Studio Code extension that displays the projects you're working in, on your Discord profile.\n\nYeah, I know: not new. Shut up.",
   "repository": {
