@@ -2,7 +2,7 @@
   "name": "discode",
   "icon": "icon.png",
   "displayName": "Discode",
-  "description": "A Visual Studio Code extension that displays the projects you're working in, on your Discord profile.\n\nYeah, I know: not new. Shut up.",
+  "description": "A Visual Studio Code extension that displays the projects you're working in, on your Discord profile. (Yeah, I know: not new. Shut up.)",
   "repository": {
     "type": "git",
     "url": "https://github.com/axololly/my-own-rpc-thingy.git"
@@ -10,7 +10,7 @@
   "author": {
     "name": "axololly"
   },
-  "version": "0.2.0",
+  "version": "0.2.1",
   "engines": {
     "vscode": "^1.98.0"
   },
@@ -99,16 +99,16 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "compile": "node esbuild.js",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test"
   },
   "dependencies": {
+    "discord-rpc": "^4.0.1",
     "openurl": "^1.1.1",
-    "pathlib-js": "^1.5.0",
-    "discord-rpc": "^4.0.1"
+    "pathlib-js": "^1.5.0"
   },
   "devDependencies": {
     "@types/discord-rpc": "^4.0.9",
@@ -121,8 +121,8 @@
     "@typescript-eslint/parser": "^8.28.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
+    "esbuild": "^0.25.2",
     "eslint": "^9.23.0",
-    "typescript": "^5.7.3",
-    "vscode": "^1.1.37"
+    "typescript": "^5.7.3"
   }
 }

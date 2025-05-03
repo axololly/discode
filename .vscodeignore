@@ -1,8 +1,13 @@
+.git/**
 .vscode/**
-assets/**
-build/**
 src/**
+assets/**
+node_modules/**
 .gitignore
+.vscodeignore
+axo.py
+esbuild.js
+eslint.config.mjs
+package-lock.json
 TODO.md
-esling.config.mjs
 tsconfig.json

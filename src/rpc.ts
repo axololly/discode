@@ -44,7 +44,7 @@ export class RPC {
             logger.info(`Authenticated for user @${this.client.user!.username!}`);
         });
 
-        await this.client.login({ clientId: '783070621679747123' });
+        await this.client.login({ clientId: '1362081737169174628' });
     }
 
     private getTimestamp(): number {
@@ -121,7 +121,7 @@ export class RPC {
             largeImageText: `On line ${cursor.line + 1} of ${totalLines}`,
 
             smallImageKey:  folderIcon.url,
-            smallImageText: folder == wsFolderPath ? `${folder.basename} (root)` : `~/${wsFolderPath.relative(folder)}`,
+            smallImageText: `~/${wsFolderPath.relative(folder)}`,
 
             details: `Editing: ${file.basename}`,
             state:   `${debugSession ? "Debugging" : "Working"} in: ${workspace.name ?? folder.stem}`,
@@ -222,7 +222,7 @@ export class RPC {
             largeImageText: `On line ${cursor.line + 1} of ${doc.lineCount}`,
 
             smallImageKey:  folderIcon.url,
-            smallImageText: folder == wsFolderPath ? `${folder.basename} (root)` : `~/${wsFolderPath.relative(folder)}`,
+            smallImageText: `~/${wsFolderPath.relative(folder)}`,
 
             details: `Idling on: ${file.basename}`,
             state:   `${debugSession ? "Debugging" : "Working"} in: ${workspace.name ?? folder.stem}`,

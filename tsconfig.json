@@ -9,6 +9,12 @@
     "strict": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "esModuleInterop": true
-  }
+    "esModuleInterop": true,
+    "moduleResolution": "node"
+  },
+  "include": [
+    "src/**/*",
+    "node_modules/@types/vscode/index.d.ts",
+    "esbuild.js"
+  ]
 }
