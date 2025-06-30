@@ -11,5 +11,5 @@ interface Mapping {
 export const fileExts: Mapping = _fE;
 export const fileNames: Mapping = _fN;
 export const filePaths: Mapping = _fP;
-export const folderNames: Mapping = _fN;
+export const folderNames: Mapping = _foN;
 export const languageIDs: Mapping = _lI;
