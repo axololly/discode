@@ -1,5 +1,4 @@
 const { build } = require("esbuild");
-const { dependencies } = require("./package.json");
 
 build({
     entryPoints: ["src/extension.ts"],

@@ -1,15 +1,10 @@
-import { commands, window, workspace } from 'vscode';
+import { commands, Disposable, window, workspace } from 'vscode';
 import { RPC } from './rpc';
 import { registerGitCheck } from './git';
 import { checkForLatestVersion } from './versioning';
-import { Settings } from './settings';
 
-let editorOpenedAt = Math.floor(Date.now() / 1000);
-let rpc = new RPC(editorOpenedAt);
-
-async function startExtension() {
-    // Log in to Discord's RPC.
-    await rpc.start();
+async function startExtension(): Promise<Disposable[]> {
+    let disposables: Disposable[] = [];
 
     // If we load into an editor from a previous session,
     // update the RPC, as this is not covered by the
@@ -28,8 +23,8 @@ async function startExtension() {
     }
     
     // Register listeners
-    window.onDidChangeActiveTextEditor(rpc.changeEditorCallback, rpc);
-    window.onDidChangeWindowState(rpc.changeEditorFocus, rpc);
+    window.onDidChangeActiveTextEditor(rpc.changeEditorCallback, rpc, disposables);
+    window.onDidChangeWindowState(rpc.changeEditorFocus, rpc, disposables);
     
     registerGitCheck(rpc);
 
@@ -39,17 +34,18 @@ async function startExtension() {
 
     // When the extension's settings are updated,
     // reflect those changes in code.
-    workspace.onDidChangeConfiguration(() => {
-        rpc.settings = Settings.load();
-    });
+    workspace.onDidChangeConfiguration(rpc.onSettingsChange, rpc, disposables); // Check here
 
     // Let the user know the extension is working.
     window.showInformationMessage("Successfully started the extension.");
+
+    return disposables;
 }
 
+let editorOpenedAt = Math.floor(Date.now() / 1000);
+let rpc = new RPC(editorOpenedAt, startExtension);
+
 export async function activate() {
-    startExtension();
-    
     // Register some simple commands for
     // connecting and disconnecting from RPC.
     commands.registerCommand(
@@ -61,6 +57,10 @@ export async function activate() {
         "discode.disconnect",
         rpc.stop, rpc
     );
+
+    if (rpc.settings.disableThisWorkspace) return;
+
+    rpc.start();
 }
 
 export function deactivate() {

@@ -1,7 +1,7 @@
 import { getLogger } from './logging';
 import { Client } from 'discord-rpc';
 import { Icons } from './icons';
-import { DebugSession, TextEditor, WindowState, debug, window, workspace } from 'vscode';
+import { DebugSession, Disposable, TextEditor, WindowState, debug, window, workspace } from 'vscode';
 import Path from 'pathlib-js';
 import { Settings } from './settings';
 import { GitInfo } from './git';
@@ -24,19 +24,29 @@ interface FocusedFile {
 // Where the magic happens.
 export class RPC {
     client: Client;
-    focusedFile: FocusedFile | undefined;
-    gitInfo: GitInfo | undefined;
+    focusedFile?: FocusedFile;
+    gitInfo?: GitInfo;
     openedSince: number;
-    idlingWait: NodeJS.Timeout | undefined;
+    idlingWait?: NodeJS.Timeout;
     settings: Settings;
+    isLoggedIn: boolean;
+    
+    startExtensionFunc: Function;
+    eventUnsubscribers: Disposable[] = [];
 
-    constructor (openedSince: number) {
+    constructor (openedSince: number, startExtensionFunc: Function) {
         this.client = new Client({ transport: 'ipc' });
         this.settings = Settings.load();
+
+        logger.info(JSON.stringify(this.settings));
 
         // Store a timestamp of when the editor was first
         // booted up, that can be displayed in the RPC.
         this.openedSince = openedSince;
+
+        this.isLoggedIn = false;
+
+        this.startExtensionFunc = startExtensionFunc;
     }
 
     async start() {
@@ -44,7 +54,32 @@ export class RPC {
             logger.info(`Authenticated for user @${this.client.user!.username!}`);
         });
 
+        this.client.on('connected', () => {
+            this.isLoggedIn = true;
+        });
+
+        this.client.on('disconnected', () => {
+            this.isLoggedIn = false;
+        });
+
         await this.client.login({ clientId: '1362081737169174628' });
+
+        this.eventUnsubscribers = await this.startExtensionFunc();
+    }
+
+    onSettingsChange() {
+        this.settings = Settings.load();
+
+        let shouldHide = this.settings.disableThisWorkspace;
+
+        logger.info(`Should hide? ${shouldHide} | Is logged in? ${this.isLoggedIn}`);
+
+        // If we are logged in and we are disabling, (both true) or
+        // if we are not logged in and we are not disabling, (both false)
+        // we need to do something to change our visibility.
+        if (shouldHide === this.isLoggedIn) {
+            shouldHide ? this.stop() : this.start();
+        }
     }
 
     private getTimestamp(): number {
@@ -242,9 +277,16 @@ export class RPC {
     }
 
     stop() {
-        logger.info("Destroying client and clearing idling timeout.");
+        let count = this.eventUnsubscribers.length;
+
+        logger.info(`Destroying client and unsubscribing from ${count} listener${count !== 1 ? 's' : ''}.`);
 
         this.client.destroy();
+        
         clearTimeout(this.idlingWait);
+
+        for (var disp of this.eventUnsubscribers) {
+            disp.dispose();
+        }
     }
 }

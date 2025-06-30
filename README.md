@@ -15,6 +15,14 @@ Over the past three weeks, I put together this extension that:
 - includes support for when debugging
 - has its own output tab when logging
 
+### Setup
+
+Open whatever release you want, and then take the produced `.vsix` and open it in Visual Studio Code. Right-click it and you'll see a "Install Extension VSIX". Click that, and then it'll set up everything you need.
+
+To manually connect or disconnect, those are two things in the command pallete (Ctrl+Shift+P).
+
+To customise the extension, open Settings (Ctrl+,) and search for "discode". This will let you customise from here.
+
 ### Undocumented
 
 If there are parts of the setup that aren't really documented, do let me know. I'm not exactly that interested in decorating this project at the moment, so the most you'll get is comments in the code explaining what it does.

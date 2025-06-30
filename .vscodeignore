@@ -11,3 +11,4 @@ eslint.config.mjs
 package-lock.json
 TODO.md
 tsconfig.json
+icon-builder/

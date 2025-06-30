@@ -16,6 +16,7 @@ interface WorkspaceConfiguration {
     keepFileTimersWhenChanging: boolean;
     startNewTimersAfterIdling: boolean;
     useGitFeatures: boolean;
+    disableThisWorkspace: boolean;
 }
 
 // Represents the converted settings from the settings menu.
@@ -27,6 +28,7 @@ export class Settings {
     keepFileTimersWhenChanging: boolean;
     startNewTimersAfterIdling: boolean;
     useGitFeatures: boolean;
+    disableThisWorkspace: boolean;
 
     constructor (options: WorkspaceConfiguration) {
         logger.info("Successfully loaded settings!");
@@ -44,11 +46,14 @@ export class Settings {
         }
 
         this.idleTimeout = timeout;
+
+        // Someone let me know how I can shorten this.
         this.includeWatermark = options.includeWatermark;
         this.promptOnNewRelease = options.promptOnNewRelease;
         this.keepFileTimersWhenChanging = options.keepFileTimersWhenChanging;
         this.startNewTimersAfterIdling = options.startNewTimersAfterIdling;
         this.useGitFeatures = options.useGitFeatures;
+        this.disableThisWorkspace = options.disableThisWorkspace;
     }
 
     static load(): Settings {

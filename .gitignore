@@ -6,3 +6,4 @@ build/
 assets/vscode.png
 TODO.md
 *.ps1
+icon-builder/
