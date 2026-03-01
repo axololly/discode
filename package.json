@@ -5,14 +5,15 @@
   "description": "A Visual Studio Code extension that displays the projects you're working in, on your Discord profile. (Yeah, I know: not new. Shut up.)",
   "repository": {
     "type": "git",
-    "url": "https://github.com/axololly/my-own-rpc-thingy.git"
+    "url": "https://github.com/axololly/discode.git"
   },
   "author": {
     "name": "axololly"
   },
-  "version": "0.2.3",
+  "publisher": "axololly",
+  "version": "0.3.0",
   "engines": {
-    "vscode": "^1.98.0"
+    "vscode": "^1.105.0"
   },
   "categories": [
     "Other"
@@ -24,6 +25,9 @@
     "vscode.git"
   ],
   "main": "./out/extension.js",
+  "linkProtectionTrustedDomains": [
+    "https://open-vsx.org"
+  ],
   "contributes": {
     "commands": [
       {
@@ -76,12 +80,6 @@
           "default": true,
           "markdownDescription": "Whether or not to include a button that links back to this extension.\n\n_If you opt not to have this enabled, you can share this project by word of mouth. Thank you._"
         },
-        "discode.promptOnNewRelease": {
-          "title": "Prompt on New Release",
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Whether or not to prompt the user on startup when a new version of this extension is discovered."
-        },
         "discode.keepFileTimersWhenChanging": {
           "title": "Keep File Timers When Changing",
           "type": "boolean",
@@ -112,23 +110,21 @@
     "test": "vscode-test"
   },
   "dependencies": {
-    "discord-rpc": "^4.0.1",
-    "openurl": "^1.1.1",
+    "@xhayper/discord-rpc": "^1.1.8",
+    "git-url-parse": "^16.1.0",
     "pathlib-js": "^1.5.0"
   },
   "devDependencies": {
-    "@types/discord-rpc": "^4.0.9",
     "@types/fs-extra": "^11.0.4",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^20.17.28",
-    "@types/openurl": "^1.0.3",
-    "@types/vscode": "^1.98.0",
-    "@typescript-eslint/eslint-plugin": "^8.28.0",
-    "@typescript-eslint/parser": "^8.28.0",
+    "@types/node": "^20.19.35",
+    "@types/vscode": "^1.105.0",
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
+    "@typescript-eslint/parser": "^8.56.1",
     "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1",
-    "esbuild": "^0.25.2",
-    "eslint": "^9.23.0",
-    "typescript": "^5.7.3"
+    "@vscode/test-electron": "^2.5.2",
+    "esbuild": "^0.25.12",
+    "eslint": "^9.39.3",
+    "typescript": "^5.9.3"
   }
 }

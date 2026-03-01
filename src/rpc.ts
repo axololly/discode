@@ -1,10 +1,10 @@
 import { getLogger } from './logging';
-import { Client } from 'discord-rpc';
+import { Client, SetActivity } from '@xhayper/discord-rpc';
 import { Icons } from './icons';
 import { DebugSession, Disposable, TextEditor, WindowState, debug, window, workspace } from 'vscode';
 import Path from 'pathlib-js';
 import { Settings } from './settings';
-import { GitInfo } from './git';
+import { getGitUrl } from './git';
 
 let logger = getLogger("discode-rpc");
 
@@ -25,7 +25,7 @@ interface FocusedFile {
 export class RPC {
     client: Client;
     focusedFile?: FocusedFile;
-    gitInfo?: GitInfo;
+    gitUrl?: string;
     openedSince: number;
     idlingWait?: NodeJS.Timeout;
     settings: Settings;
@@ -35,7 +35,13 @@ export class RPC {
     eventUnsubscribers: Disposable[] = [];
 
     constructor (openedSince: number, startExtensionFunc: Function) {
-        this.client = new Client({ transport: 'ipc' });
+        this.client = new Client({
+            clientId: '1362081737169174628',
+            transport: {
+                type: 'ipc'
+            }
+        });
+
         this.settings = Settings.load();
 
         logger.info(JSON.stringify(this.settings));
@@ -51,20 +57,28 @@ export class RPC {
 
     async start() {
         this.client.on('ready', () => {
-            logger.info(`Authenticated for user @${this.client.user!.username!}`);
-        });
-
-        this.client.on('connected', () => {
             this.isLoggedIn = true;
+
+            logger.info(`Authenticated for user @${this.client.user!.username}`);
         });
 
         this.client.on('disconnected', () => {
             this.isLoggedIn = false;
         });
 
-        await this.client.login({ clientId: '1362081737169174628' });
+        await this.client.login();
 
         this.eventUnsubscribers = await this.startExtensionFunc();
+    }
+
+    async changeActivity(activity: SetActivity) {
+        if (!this.client.user) {
+            logger.debug("Attempted to change activity but client was undefined (not connected)");
+
+            return;
+        }
+
+        await this.client.user!.setActivity(activity);
     }
 
     onSettingsChange() {
@@ -127,10 +141,10 @@ export class RPC {
 
         let buttons: Button[] = [];
 
-        if (this.gitInfo) {
+        if (this.gitUrl) {
             buttons.push({
                 label: "View Repository",
-                url: this.gitInfo.url
+                url: this.gitUrl
             });
         }
 
@@ -151,7 +165,7 @@ export class RPC {
                   ? this.openedSince
                   : this.focusedFile.since;
 
-        this.client.setActivity({
+        await this.changeActivity({
             largeImageKey:  fileIcon.url,
             largeImageText: `On line ${cursor.line + 1} of ${totalLines}`,
 
@@ -235,24 +249,24 @@ export class RPC {
 
         let buttons: Button[] = [];
 
-        if (this.gitInfo) {
+        if (this.gitUrl) {
             buttons.push({
                 label: "View Repository",
-                url: this.gitInfo.url
+                url: this.gitUrl
             });
         }
 
         if (this.settings.includeWatermark) {
             buttons.push({
                 label: "Try me out!",
-                url: "https://github.com/axololly/my-own-rpc-thingy/tree/main"
+                url: "https://github.com/axololly/discode/tree/main"
             });
         }
 
         let wsFolder = workspace.getWorkspaceFolder(doc.uri)!;
         let wsFolderPath = new Path(wsFolder.uri.fsPath);
 
-        this.client.setActivity({
+        await this.changeActivity({
             largeImageKey:  fileIcon.url,
             largeImageText: `On line ${cursor.line + 1} of ${doc.lineCount}`,
 

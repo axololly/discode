@@ -1,7 +1,6 @@
 import { commands, Disposable, window, workspace } from 'vscode';
 import { RPC } from './rpc';
 import { registerGitCheck } from './git';
-import { checkForLatestVersion } from './versioning';
 
 async function startExtension(): Promise<Disposable[]> {
     let disposables: Disposable[] = [];
@@ -27,10 +26,6 @@ async function startExtension(): Promise<Disposable[]> {
     window.onDidChangeWindowState(rpc.changeEditorFocus, rpc, disposables);
     
     registerGitCheck(rpc);
-
-    if (rpc.settings.promptOnNewRelease) {
-        checkForLatestVersion();
-    }
 
     // When the extension's settings are updated,
     // reflect those changes in code.
@@ -60,7 +55,7 @@ export async function activate() {
 
     if (rpc.settings.disableThisWorkspace) return;
 
-    rpc.start();
+    await rpc.start();
 }
 
 export function deactivate() {

@@ -19,9 +19,9 @@ Over the past three weeks, I put together this extension that:
 
 Open whatever release you want, and then take the produced `.vsix` and open it in Visual Studio Code. Right-click it and you'll see a "Install Extension VSIX". Click that, and then it'll set up everything you need.
 
-To manually connect or disconnect, those are two things in the command pallete (Ctrl+Shift+P).
+To manually connect or disconnect, those are two things in the command pallete (`Ctrl+Shift+P`).
 
-To customise the extension, open Settings (Ctrl+,) and search for "discode". This will let you customise from here.
+To customise the extension, open Settings (`Ctrl+,`) and search for "discode". This will let you customise from here.
 
 ### Undocumented
 

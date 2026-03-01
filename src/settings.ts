@@ -12,7 +12,6 @@ interface WorkspaceConfiguration {
     minimumLoggingLevel: string;
     idleTimeout: number;
     includeWatermark: boolean;
-    promptOnNewRelease: boolean;
     keepFileTimersWhenChanging: boolean;
     startNewTimersAfterIdling: boolean;
     useGitFeatures: boolean;
@@ -24,7 +23,6 @@ export class Settings {
     minLogLevel: LogLevel;
     idleTimeout: number;
     includeWatermark: boolean;
-    promptOnNewRelease: boolean;
     keepFileTimersWhenChanging: boolean;
     startNewTimersAfterIdling: boolean;
     useGitFeatures: boolean;
@@ -49,7 +47,6 @@ export class Settings {
 
         // Someone let me know how I can shorten this.
         this.includeWatermark = options.includeWatermark;
-        this.promptOnNewRelease = options.promptOnNewRelease;
         this.keepFileTimersWhenChanging = options.keepFileTimersWhenChanging;
         this.startNewTimersAfterIdling = options.startNewTimersAfterIdling;
         this.useGitFeatures = options.useGitFeatures;
